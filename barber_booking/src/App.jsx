@@ -1,122 +1,116 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState } from 'react';
+import { supabase } from './supabaseClient'
+import './App.css';
+
 
 function App() {
-  const [count, setCount] = useState(0)
+  //Core thins
+  const shopName = "FireBlade";
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
 
-      <div className="ticks"></div>
+  //selected barber
+  const [selectedBarber, setSelectedBarber] = useState(null)
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+  //list of barbers
+  const barbers = [
+    {id: 1, name: "Marius Hansen", specialty: "Barber Apprentice"},
+    {id: 2, name:"John Jøgersen", specialty: "Qualified Barber"},
+    
+  ];
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+  //form input
+  const [customerName, setCustomerName] = useState("");
+  const [appointmentTime, setAppointmentTime] = useState(null);
+  const [bookingConfirmed, setBookingConfirmed] = useState(false);
+
+  //bookingform handler
+  const handleBookingSubmit = (event) => {
+    event.preventDefault(); // Prevents page reload on form submit
+    setBookingConfirmed(true);
+  };
+
+  //reset booking. TO start new booking
+  const handleReset = () => {
+    setSelectedBarber(null);
+    setCustomerName("");
+    setAppointmentTime("");
+    setBookingConfirmed(false);
+  };
+
+
+
+return (
+    <div className="container">
+      <header className="header">
+        <h1>{shopName}</h1>
+      </header>
+
+      <main className="main-content">
+        {/* VIEW 1: Show Confirmation Message */}
+        {bookingConfirmed ? (
+          <div className="confirmation-card">
+            <h2>🎉 Booking Confirmed!</h2>
+            <p>Thank you, <strong>{customerName}</strong>.</p>
+            <p>Your appointment with <strong>{selectedBarber}</strong> is set for <strong>{appointmentTime}</strong>.</p>
+            <button className="book-btn" onClick={handleReset}>Book Another</button>
+          </div>
+        ) : selectedBarber ? (
+          /* VIEW 2: Show Booking Form when a barber is selected */
+          <div className="booking-form-card">
+            <h3>Book with {selectedBarber}</h3>
+            <form onSubmit={handleBookingSubmit}>
+              <div className="form-group">
+                <label>Your Name:</label>
+                <input 
+                  type="text" 
+                  required 
+                  value={customerName} 
+                  onChange={(e) => setCustomerName(e.target.value)} 
+                  placeholder="e.g. John Doe" 
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Select Time:</label>
+                <select 
+                  required 
+                  value={appointmentTime} 
+                  onChange={(e) => setAppointmentTime(e.target.value)}
+                >
+                  <option value="">-- Choose a Slot --</option>
+                  <option value="10:00 AM">10:00 AM</option>
+                  <option value="11:30 AM">11:30 AM</option>
+                  <option value="02:00 PM">02:00 PM</option>
+                </select>
+              </div>
+
+              <div className="button-group">
+                <button type="submit" className="book-btn">Confirm Booking</button>
+                <button type="button" className="cancel-btn" onClick={() => setSelectedBarber(null)}>Cancel</button>
+              </div>
+            </form>
+          </div>
+        ) : (
+          /* VIEW 3: Show Barber List when no barber is selected */
+          <div>
+            <h2>Select a Barber</h2>
+            {barbers.map((barber) => (
+              <div key={barber.id} className="barber-card">
+                <h3>{barber.name}</h3>
+                <p>Specialty: {barber.specialty}</p>
+                <button 
+                  className="book-btn" 
+                  onClick={() => setSelectedBarber(barber.name)}
+                >
+                  Book with {barber.name}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </main>
+    </div>
+  );
 }
 
-export default App
+export default App;
