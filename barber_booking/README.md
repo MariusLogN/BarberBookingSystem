@@ -16,21 +16,27 @@ A full-stack booking prototype built to learn how a React interface, an external
 ## Screenshots
 
 Front page
+
 ![alt text]({F44F6FC3-5783-47C8-98CA-D2703D4A8572}.png)
 
 Booking form
+
 ![alt text]({C3A7D0A3-95B5-42B1-B005-4D3F42793A37}.png)
 
 Dynamiclly generated dates and retriving booked times for the barber from the Database
+
 ![alt text]({433DD4DC-51E2-4EA8-B584-B880F1C8D4BA}.png)
 
 Booking confirmation
+
 ![alt text]({FA1AC9C2-6DD3-49F7-9C8E-CBD827CA9C3A}.png)
 
 Bookings table
+
 ![alt text]({AAFF1A90-0E9D-46FF-8682-C89329A69928}.png)
 
 Barber table
+
 ![alt text]({8BF31B81-7687-4448-987D-5E35057A8C0D}.png)
 
 ## How it works
