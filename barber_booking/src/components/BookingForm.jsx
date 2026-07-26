@@ -1,4 +1,18 @@
+import { useEffect, useState } from "react";
+import { getBookedTimes } from "../services/bookingService";
 import { getNextBookingDates } from "../utils/bookingDates";
+
+const appointmentTimes = [
+  { value: "10:00", label: "10:00 AM" },
+  { value: "10:30", label: "10:30 AM" },
+  { value: "11:00", label: "11:00 AM" },
+  { value: "11:30", label: "11:30 AM" },
+  { value: "12:00", label: "12:00 PM" },
+  { value: "12:30", label: "12:30 PM" },
+  { value: "13:00", label: "01:00 PM" },
+  { value: "13:30", label: "01:30 PM" },
+  { value: "14:00", label: "02:00 PM" },
+];
 
 function BookingForm({
   barber,
@@ -14,6 +28,49 @@ function BookingForm({
   onCancel,
 }) {
   const bookingDates = getNextBookingDates();
+  const [bookedTimes, setBookedTimes] = useState([]);
+  const [isLoadingTimes, setIsLoadingTimes] = useState(false);
+  const [timesError, setTimesError] = useState("");
+
+  useEffect(() => {
+    if (!selectedDate) {
+      return;
+    }
+
+    let isRequestCurrent = true;
+
+    async function loadBookedTimes() {
+      setIsLoadingTimes(true);
+      setTimesError("");
+
+      try {
+        const times = await getBookedTimes({
+          barberId: barber.id,
+          date: selectedDate,
+        });
+
+        if (isRequestCurrent) {
+          setBookedTimes(times);
+        }
+      } catch (error) {
+        console.error("Availability load error:", error);
+
+        if (isRequestCurrent) {
+          setTimesError("Could not check availability.");
+        }
+      } finally {
+        if (isRequestCurrent) {
+          setIsLoadingTimes(false);
+        }
+      }
+    }
+
+    loadBookedTimes();
+
+    return () => {
+      isRequestCurrent = false;
+    };
+  }, [barber.id, selectedDate]);
 
   return (
     <section className="booking-form-card">
@@ -50,9 +107,10 @@ function BookingForm({
             id="appointment-date"
             required
             value={selectedDate}
-            onChange={(event) =>
-              onDateChange(event.target.value)
-            }
+            onChange={(event) => {
+              onDateChange(event.target.value);
+              onTimeChange("");
+            }}
           >
             <option value="">Choose a date</option>
             {bookingDates.map((bookingDate) => (
@@ -64,6 +122,22 @@ function BookingForm({
               </option>
             ))}
           </select>
+
+          {isLoadingTimes && <p>Checking availability...</p>}
+
+          {timesError && (
+            <p className="error-banner" role="alert">
+              {timesError}
+            </p>
+          )}
+
+          {!isLoadingTimes && !timesError && selectedDate && (
+            <p>
+              {bookedTimes.length === 0
+                ? "All times are currently available."
+                : `${bookedTimes.length} time slot(s) already booked.`}
+            </p>
+          )}
         </div>
 
         <div className="form-group">
@@ -75,21 +149,28 @@ function BookingForm({
             id="appointment-time"
             required
             value={appointmentTime}
+            disabled={
+              !selectedDate || isLoadingTimes || Boolean(timesError)
+            }
             onChange={(event) =>
               onTimeChange(event.target.value)
             }
           >
             <option value="">Choose a time</option>
-            <option value="10:00">10:00 AM</option>
-            <option value="10:30">10:30 AM</option>
-            <option value="11:00">11:00 AM</option>
-            <option value="11:30">11:30 AM</option>
-            <option value="12:00">12:00 PM</option>
-            <option value="12:30">12:30 PM</option>
-            <option value="13:00">01:00 PM</option>
-            <option value="13:30">01:30 PM</option>
-            <option value="14:00">02:00 PM</option>
+            {appointmentTimes.map((time) => {
+              const isBooked = bookedTimes.includes(time.value);
 
+              return (
+                <option
+                  key={time.value}
+                  value={time.value}
+                  disabled={isBooked}
+                >
+                  {time.label}
+                  {isBooked ? " — unavailable" : ""}
+                </option>
+              );
+            })}
           </select>
         </div>
 

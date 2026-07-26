@@ -80,9 +80,15 @@ function App() {
     } catch (error) {
       console.error("Database save error:", error);
 
-      setErrorMessage(
-        "Could not save your booking. Please try again."
-      );
+      if (error.code === "23505") {
+        setErrorMessage(
+          "That time was just booked. Please choose another time."
+        );
+      } else {
+        setErrorMessage(
+          "Could not save your booking. Please try again."
+        );
+      }
     } finally {
       setIsSubmitting(false);
     }
