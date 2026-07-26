@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 
-import { barbers } from "./data/barbers";
+import { getBarbers } from "./services/barberService";
 import { createBooking } from "./services/bookingService";
 import { combineDateAndTime } from "./utils/dateTime";
 
@@ -12,6 +12,10 @@ import BookingConfirmation from "./components/BookingConfirmation";
 function App() {
   const shopName = "Fireblade";
 
+  const [barbers, setBarbers] = useState([]);
+  const [isLoadingBarbers, setIsLoadingBarbers] = useState(true);
+  const [barbersError, setBarbersError] = useState("");
+
   const [selectedBarber, setSelectedBarber] = useState(null);
   const [customerName, setCustomerName] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
@@ -20,6 +24,38 @@ function App() {
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    let shouldIgnoreResult = false;
+
+    async function loadBarbers() {
+      try {
+        const barberData = await getBarbers();
+
+        if (!shouldIgnoreResult) {
+          setBarbers(barberData);
+        }
+      } catch (error) {
+        console.error("Database load error:", error);
+
+        if (!shouldIgnoreResult) {
+          setBarbersError(
+            "Could not load the barbers. Please refresh and try again."
+          );
+        }
+      } finally {
+        if (!shouldIgnoreResult) {
+          setIsLoadingBarbers(false);
+        }
+      }
+    }
+
+    loadBarbers();
+
+    return () => {
+      shouldIgnoreResult = true;
+    };
+  }, []);
 
   async function handleBookingSubmit(event) {
     event.preventDefault();
@@ -96,6 +132,16 @@ function App() {
         onCancel={handleCancel}
       />
     );
+  } else if (isLoadingBarbers) {
+    currentView = <p>Loading barbers...</p>;
+  } else if (barbersError) {
+    currentView = (
+      <p className="error-banner" role="alert">
+        {barbersError}
+      </p>
+    );
+  } else if (barbers.length === 0) {
+    currentView = <p>No barbers are available yet.</p>;
   } else {
     currentView = (
       <BarberSelection

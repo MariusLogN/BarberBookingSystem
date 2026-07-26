@@ -21,6 +21,11 @@
   background-color: #fdfdfd;
 }
 
+.booking-form-card h2 {
+  color: #2d3330;
+}
+
+
 .confirmation-card {
   background-color: #f0fdf4;
   border-color: #bbf7d0;
@@ -28,7 +33,7 @@
 }
 
 .confirmation-card h2 {
-  color: #1a8f4a; 
+  color: #189b51; 
 }
 
 
