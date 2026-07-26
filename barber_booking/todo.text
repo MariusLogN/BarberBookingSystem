@@ -1,7 +1,7 @@
 Load barber from database instead of code (Done)
 Generate data dynamiclly like booking dates (DONE)
 Model servinces properly
-prevent double booking (Doing)
+prevent double booking (Done)
 application states?
 validation?
 Tests
