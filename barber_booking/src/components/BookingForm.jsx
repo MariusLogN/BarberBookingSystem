@@ -1,3 +1,5 @@
+import { getNextBookingDates } from "../utils/bookingDates";
+
 function BookingForm({
   barber,
   customerName,
@@ -11,6 +13,8 @@ function BookingForm({
   onSubmit,
   onCancel,
 }) {
+  const bookingDates = getNextBookingDates();
+
   return (
     <section className="booking-form-card">
       <h2>Book with {barber.name}</h2>
@@ -51,9 +55,14 @@ function BookingForm({
             }
           >
             <option value="">Choose a date</option>
-            <option value="2026-07-25">July 25</option>
-            <option value="2026-07-26">July 26</option>
-            <option value="2026-07-27">July 27</option>
+            {bookingDates.map((bookingDate) => (
+              <option
+                key={bookingDate.value}
+                value={bookingDate.value}
+              >
+                {bookingDate.label}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -72,8 +81,15 @@ function BookingForm({
           >
             <option value="">Choose a time</option>
             <option value="10:00">10:00 AM</option>
+            <option value="10:30">10:30 AM</option>
+            <option value="11:00">11:00 AM</option>
             <option value="11:30">11:30 AM</option>
-            <option value="14:00">2:00 PM</option>
+            <option value="12:00">12:00 PM</option>
+            <option value="12:30">12:30 PM</option>
+            <option value="13:00">01:00 PM</option>
+            <option value="13:30">01:30 PM</option>
+            <option value="14:00">02:00 PM</option>
+
           </select>
         </div>
 

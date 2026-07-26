@@ -1,7 +1,9 @@
-Load barber from database instead of code (Doing)
+Load barber from database instead of code (Done)
 Generate data dynamiclly like booking dates ()
 Model servinces properly
 prevent double booking
 application states?
 validation?
 Tests
+adminview and authentication
+API to sms?
