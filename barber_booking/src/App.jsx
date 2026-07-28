@@ -17,6 +17,7 @@ function App() {
   const [barbersError, setBarbersError] = useState("");
 
   const [selectedBarber, setSelectedBarber] = useState(null);
+  const [selectedService, setSelectedService] = useState(null);
   const [customerName, setCustomerName] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [appointmentTime, setAppointmentTime] = useState("");
@@ -96,6 +97,7 @@ function App() {
 
   function handleCancel() {
     setSelectedBarber(null);
+    setSelectedService(null);
     setSelectedDate("");
     setAppointmentTime("");
     setErrorMessage("");
@@ -103,6 +105,7 @@ function App() {
 
   function handleReset() {
     setSelectedBarber(null);
+    setSelectedService(null);
     setCustomerName("");
     setSelectedDate("");
     setAppointmentTime("");
@@ -126,12 +129,14 @@ function App() {
     currentView = (
       <BookingForm
         barber={selectedBarber}
+        selectedService={selectedService}
         customerName={customerName}
         selectedDate={selectedDate}
         appointmentTime={appointmentTime}
         isSubmitting={isSubmitting}
         errorMessage={errorMessage}
         onCustomerNameChange={setCustomerName}
+        onServiceChange={setSelectedService}
         onDateChange={setSelectedDate}
         onTimeChange={setAppointmentTime}
         onSubmit={handleBookingSubmit}

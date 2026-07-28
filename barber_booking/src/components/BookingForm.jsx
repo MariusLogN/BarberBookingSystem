@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getBookedTimes } from "../services/bookingService";
+import { getServicesForBarber } from "../services/serviceCatalogService";
 import { getNextBookingDates } from "../utils/bookingDates";
 
 const appointmentTimes = [
@@ -28,9 +29,42 @@ function BookingForm({
   onCancel,
 }) {
   const bookingDates = getNextBookingDates();
+  const [services, setServices] = useState([]);
+  const [isLoadingServices, setIsLoadingServices] = useState(true);
+  const [servicesError, setServicesError] = useState("");
   const [bookedTimes, setBookedTimes] = useState([]);
   const [isLoadingTimes, setIsLoadingTimes] = useState(false);
   const [timesError, setTimesError] = useState("");
+
+  useEffect(() => {
+    let isRequestCurrent = true;
+
+    async function loadServices() {
+      try {
+        const barberServices = await getServicesForBarber(barber.id);
+
+        if (isRequestCurrent) {
+          setServices(barberServices);
+        }
+      } catch (error) {
+        console.error("Services load error:", error);
+
+        if (isRequestCurrent) {
+          setServicesError("Could not load services.");
+        }
+      } finally {
+        if (isRequestCurrent) {
+          setIsLoadingServices(false);
+        }
+      }
+    }
+
+    loadServices();
+
+    return () => {
+      isRequestCurrent = false;
+    };
+  }, [barber.id]);
 
   useEffect(() => {
     if (!selectedDate) {
@@ -75,6 +109,18 @@ function BookingForm({
   return (
     <section className="booking-form-card">
       <h2>Book with {barber.name}</h2>
+
+      {isLoadingServices && <p>Loading services...</p>}
+
+      {servicesError && (
+        <p className="error-banner" role="alert">
+          {servicesError}
+        </p>
+      )}
+
+      {!isLoadingServices && !servicesError && (
+        <p>{services.length} service(s) available.</p>
+      )}
 
       {errorMessage && (
         <p className="error-banner" role="alert">
