@@ -35,7 +35,8 @@ export async function createBooking({
   customerName,
   barberId,
   barberName,
-  appointmentTime,
+  serviceId,
+  appointmentTime
 }) {
   const { data, error } = await supabase
     .from("bookings")
@@ -43,6 +44,7 @@ export async function createBooking({
       customer_name: customerName,
       barber_name: barberName,
       barber_id: barberId,
+      service_id: serviceId,
       appointment_time: appointmentTime,
     });
 

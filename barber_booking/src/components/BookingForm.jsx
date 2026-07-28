@@ -17,12 +17,14 @@ const appointmentTimes = [
 
 function BookingForm({
   barber,
+  selectedService,
   customerName,
   selectedDate,
   appointmentTime,
   isSubmitting,
   errorMessage,
   onCustomerNameChange,
+  onServiceChange,
   onDateChange,
   onTimeChange,
   onSubmit,
@@ -110,18 +112,6 @@ function BookingForm({
     <section className="booking-form-card">
       <h2>Book with {barber.name}</h2>
 
-      {isLoadingServices && <p>Loading services...</p>}
-
-      {servicesError && (
-        <p className="error-banner" role="alert">
-          {servicesError}
-        </p>
-      )}
-
-      {!isLoadingServices && !servicesError && (
-        <p>{services.length} service(s) available.</p>
-      )}
-
       {errorMessage && (
         <p className="error-banner" role="alert">
           {errorMessage}
@@ -142,6 +132,43 @@ function BookingForm({
             }
             placeholder="e.g. John Doe"
           />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="service">Select Service</label>
+
+          <select
+            id="service"
+            required
+            value={selectedService?.id ?? ""}
+            disabled={isLoadingServices || Boolean(servicesError)}
+            onChange={(event) => {
+              const service = services.find(
+                (item) => String(item.id) === event.target.value
+              );
+
+              onServiceChange(service ?? null);
+            }}
+          >
+            <option value="">
+              {isLoadingServices
+                ? "Loading services..."
+                : "Choose a service"}
+            </option>
+
+            {services.map((service) => (
+              <option key={service.id} value={service.id}>
+                {service.name} — {service.duration_minutes} min — €
+                {(service.price_cents / 100).toFixed(2)}
+              </option>
+            ))}
+          </select>
+
+          {servicesError && (
+            <p className="error-banner" role="alert">
+              {servicesError}
+            </p>
+          )}
         </div>
 
         <div className="form-group">

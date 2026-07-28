@@ -61,6 +61,11 @@ function App() {
   async function handleBookingSubmit(event) {
     event.preventDefault();
 
+    if (!selectedService) {
+      setErrorMessage("Please choose a service.");
+      return;
+    }
+
     setIsSubmitting(true);
     setErrorMessage("");
 
@@ -74,6 +79,7 @@ function App() {
         customerName: customerName.trim(),
         barberId: selectedBarber.id,
         barberName: selectedBarber.name,
+        serviceId: selectedService.id,
         appointmentTime: appointmentTimestamp,
       });
 
