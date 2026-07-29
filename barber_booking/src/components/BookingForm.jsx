@@ -208,9 +208,9 @@ function BookingForm({
 
           {!isLoadingTimes && !timesError && selectedDate && (
             <p>
-              {bookedIntervals.length === 0
-                ? "All times are currently available."
-                : `${bookedIntervals.length} apointment(s) already booked.`}
+              {bookedIntervals.length === 0 && (
+                <p>All times are currently available.</p>
+              )}
             </p>
           )}
         </div>
