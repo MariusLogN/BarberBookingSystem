@@ -87,9 +87,9 @@ function App() {
     } catch (error) {
       console.error("Database save error:", error);
 
-      if (error.code === "23505") {
+      if (error.code === "23505" || error.code === "23P01") {
         setErrorMessage(
-          "That time was just booked. Please choose another time."
+          "That appointment overlaps an existing booking. Please choose another time."
         );
       } else {
         setErrorMessage(

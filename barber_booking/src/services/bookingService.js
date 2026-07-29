@@ -31,6 +31,27 @@ export async function getBookedTimes({ barberId, date }) {
   );
 }
 
+export async function getBookedIntervals({ barberId, date }) {
+  const startOfDate = `${date}T00:00:00`;
+  const startOfFollowingDate = `${getFollowingDate(date)}T00:00:00`;
+
+  const { data, error } = await supabase
+    .from("booked_slots")
+    .select("appointment_time, appointment_end")
+    .eq("barber_id", barberId)
+    .gte("appointment_time", startOfDate)
+    .lt("appointment_time", startOfFollowingDate);
+
+  if (error) {
+    throw error;
+  }
+
+  return data.map((booking) => ({
+    start: booking.appointment_time,
+    end: booking.appointment_end,
+  }));
+}
+
 export async function createBooking({
   customerName,
   barberId,

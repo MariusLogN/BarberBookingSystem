@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { getBookedTimes } from "../services/bookingService";
+import { getBookedIntervals } from "../services/bookingService";
 import { getServicesForBarber } from "../services/serviceCatalogService";
+import { doesAppointmentOverlap } from "../utils/appointmentAvailability";
 import { getNextBookingDates } from "../utils/bookingDates";
 
 const appointmentTimes = [
@@ -34,7 +35,7 @@ function BookingForm({
   const [services, setServices] = useState([]);
   const [isLoadingServices, setIsLoadingServices] = useState(true);
   const [servicesError, setServicesError] = useState("");
-  const [bookedTimes, setBookedTimes] = useState([]);
+  const [bookedIntervals, setBookedIntervals] = useState([]);
   const [isLoadingTimes, setIsLoadingTimes] = useState(false);
   const [timesError, setTimesError] = useState("");
 
@@ -75,18 +76,18 @@ function BookingForm({
 
     let isRequestCurrent = true;
 
-    async function loadBookedTimes() {
+    async function loadBookedIntervals() {
       setIsLoadingTimes(true);
       setTimesError("");
 
       try {
-        const times = await getBookedTimes({
+        const intervals = await getBookedIntervals({
           barberId: barber.id,
           date: selectedDate,
         });
 
         if (isRequestCurrent) {
-          setBookedTimes(times);
+          setBookedIntervals(intervals);
         }
       } catch (error) {
         console.error("Availability load error:", error);
@@ -101,7 +102,7 @@ function BookingForm({
       }
     }
 
-    loadBookedTimes();
+    loadBookedIntervals();
 
     return () => {
       isRequestCurrent = false;
@@ -148,6 +149,7 @@ function BookingForm({
               );
 
               onServiceChange(service ?? null);
+              onTimeChange("");
             }}
           >
             <option value="">
@@ -206,9 +208,9 @@ function BookingForm({
 
           {!isLoadingTimes && !timesError && selectedDate && (
             <p>
-              {bookedTimes.length === 0
+              {bookedIntervals.length === 0
                 ? "All times are currently available."
-                : `${bookedTimes.length} time slot(s) already booked.`}
+                : `${bookedIntervals.length} apointment(s) already booked.`}
             </p>
           )}
         </div>
@@ -223,7 +225,10 @@ function BookingForm({
             required
             value={appointmentTime}
             disabled={
-              !selectedDate || isLoadingTimes || Boolean(timesError)
+              !selectedService
+              || !selectedDate
+              || isLoadingTimes
+              || Boolean(timesError)
             }
             onChange={(event) =>
               onTimeChange(event.target.value)
@@ -231,16 +236,24 @@ function BookingForm({
           >
             <option value="">Choose a time</option>
             {appointmentTimes.map((time) => {
-              const isBooked = bookedTimes.includes(time.value);
+              const isUnavailable = selectedService
+                ? doesAppointmentOverlap({
+                    date: selectedDate,
+                    time: time.value,
+                    durationMinutes:
+                      selectedService.duration_minutes,
+                    bookedIntervals,
+                  })
+                : false;
 
               return (
                 <option
                   key={time.value}
                   value={time.value}
-                  disabled={isBooked}
+                  disabled={isUnavailable}
                 >
                   {time.label}
-                  {isBooked ? " — unavailable" : ""}
+                  {isUnavailable ? " — unavailable" : ""}
                 </option>
               );
             })}
