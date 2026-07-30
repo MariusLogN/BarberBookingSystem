@@ -19,6 +19,7 @@ function App() {
   const [selectedBarber, setSelectedBarber] = useState(null);
   const [selectedService, setSelectedService] = useState(null);
   const [customerName, setCustomerName] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [appointmentTime, setAppointmentTime] = useState("");
 
@@ -75,19 +76,19 @@ function App() {
         appointmentTime
       );
 
-      await createBooking({
-        customerName: customerName.trim(),
-        barberId: selectedBarber.id,
-        barberName: selectedBarber.name,
-        serviceId: selectedService.id,
-        appointmentTime: appointmentTimestamp,
-      });
+    await createBooking({
+      customerName: customerName.trim(),
+      customerEmail,
+      barberId: selectedBarber.id,
+      serviceId: selectedService.id,
+      appointmentTime: appointmentTimestamp,
+    });
 
       setBookingConfirmed(true);
     } catch (error) {
       console.error("Database save error:", error);
 
-      if (error.code === "23505" || error.code === "23P01") {
+      if (error.status === 409)  {
         setErrorMessage(
           "That appointment overlaps an existing booking. Please choose another time."
         );
@@ -113,6 +114,7 @@ function App() {
     setSelectedBarber(null);
     setSelectedService(null);
     setCustomerName("");
+    setCustomerEmail("");
     setSelectedDate("");
     setAppointmentTime("");
     setBookingConfirmed(false);
@@ -137,11 +139,13 @@ function App() {
         barber={selectedBarber}
         selectedService={selectedService}
         customerName={customerName}
+        customerEmail={customerEmail}
         selectedDate={selectedDate}
         appointmentTime={appointmentTime}
         isSubmitting={isSubmitting}
         errorMessage={errorMessage}
         onCustomerNameChange={setCustomerName}
+        onCustomerEmailChange={setCustomerEmail}
         onServiceChange={setSelectedService}
         onDateChange={setSelectedDate}
         onTimeChange={setAppointmentTime}

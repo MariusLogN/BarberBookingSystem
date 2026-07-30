@@ -20,11 +20,13 @@ function BookingForm({
   barber,
   selectedService,
   customerName,
+  customerEmail,
   selectedDate,
   appointmentTime,
   isSubmitting,
   errorMessage,
   onCustomerNameChange,
+  onCustomerEmailChange,
   onServiceChange,
   onDateChange,
   onTimeChange,
@@ -133,6 +135,27 @@ function BookingForm({
             }
             placeholder="e.g. John Doe"
           />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="customer-email">
+            Email Address (optional)
+          </label>
+
+          <input
+            id="customer-email"
+            type="email"
+            autoComplete="email"
+            value={customerEmail}
+            onChange={(event) =>
+              onCustomerEmailChange(event.target.value)
+            }
+            placeholder="e.g. mario@example.com"
+          />
+
+          <small>
+            Provide an email address to receive a booking confirmation.
+          </small>
         </div>
 
         <div className="form-group">

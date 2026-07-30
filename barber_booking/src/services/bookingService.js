@@ -1,4 +1,5 @@
 import { supabase } from "../supabaseClient";
+import { FunctionsHttpError } from "@supabase/supabase-js";
 
 function getFollowingDate(date) {
   const followingDate = new Date(`${date}T00:00:00`);
@@ -54,24 +55,38 @@ export async function getBookedIntervals({ barberId, date }) {
 
 export async function createBooking({
   customerName,
+  customerEmail,
   barberId,
-  barberName,
   serviceId,
-  appointmentTime
+  appointmentTime,
 }) {
-  const { data, error } = await supabase
-    .from("bookings")
-    .insert({
-      customer_name: customerName,
-      barber_name: barberName,
-      barber_id: barberId,
-      service_id: serviceId,
-      appointment_time: appointmentTime,
-    });
+  const { data, error } = await supabase.functions.invoke(
+    "create-booking",
+    {
+      body: {
+        customerName,
+        customerEmail,
+        barberId,
+        serviceId,
+        appointmentTime,
+      },
+    }
+  );
+
+  if (error instanceof FunctionsHttpError) {
+    const responseBody = await error.context.json();
+
+    const functionError = new Error(
+      responseBody.error ?? "Could not create the booking."
+    );
+
+    functionError.status = error.context.status;
+    throw functionError;
+  }
 
   if (error) {
     throw error;
   }
 
-  return data;
+  return data.booking;
 }
