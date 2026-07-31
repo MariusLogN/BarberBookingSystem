@@ -1,10 +1,17 @@
-Load barber from database instead of code (Done)
+Load barber from database instead of code (DONE)
 Generate data dynamiclly like booking dates (DONE)
 Model services properly (Done)
 Handling 30 min+ bookings (Done)
 prevent double booking (Done)
-application states?
-validation?
-Tests
+application states(DONE)
+validation(Done)
+Limit On emails sends?
+Tests?
 adminview and authentication
-API to sms?
+API to sms? (DONE)
+Work on UI
+
+
+QUICK overview readme.md
+Long report PDF
+Live demo

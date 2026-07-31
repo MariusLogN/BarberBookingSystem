@@ -1,17 +1,35 @@
 # Fireblade Barber Booking System
 
-A full-stack booking prototype built to learn how a React interface, an external API, and a relational database work together. Customers can select a barber, choose a date and available time, and save the appointment to Supabase.
+A full-stack appointment booking system built with React, Supabase, PostgreSQL, and Resend. Customers can choose a barber and service, view availability, reserve an appointment, and optionally receive an email confirmation.
 
-## What this project demonstrates
+## Project at a glance
 
-- React component design, state management, and effects
-- Asynchronous loading, error, empty, and success states
-- Supabase/PostgreSQL reads and writes
-- Row-Level Security and restricted public data access
-- Dynamic generation of upcoming booking dates
-- Availability queries by barber and date
-- Double-booking protection at both the UI and database layers
-- Separation between components, services, and utility functions
+- **Frontend:** React component design, state management, effects, and explicit loading, error, empty, and success states
+- **Data model:** Relational PostgreSQL tables for barbers, services, barber-service relationships, and bookings
+- **Availability:** Dynamic booking dates and duration-aware time-slot calculations
+- **Correctness:** Database-level overlap protection that remains safe when customers submit simultaneously
+- **Backend API:** A Supabase Edge Function validates requests, loads trusted data, and owns the booking workflow
+- **Security:** Row-Level Security, server-side secrets, layered validation, foreign keys, and database constraints
+- **Integration:** Optional booking-confirmation emails through Resend, with provider message IDs and delivery-state tracking
+- **Code organization:** Separation between UI components, frontend service adapters, and reusable utility functions
+
+## Architecture
+
+```text
+React booking interface
+        |
+        v
+Frontend service adapters
+        |
+        v
+Supabase Edge Function
+        |
+        +--> PostgreSQL tables, triggers, and constraints
+        |
+        +--> Resend email API
+```
+
+The browser handles presentation and user interaction. The Edge Function acts as the trusted API boundary, while PostgreSQL remains the final authority for relationships and appointment conflicts. Email delivery is treated as an optional side effect, so a provider failure does not remove a valid booking.
 
 ## Screenshots
 
@@ -80,7 +98,6 @@ Database-backed UI needs explicit loading, error, empty, and success states. Mod
 ## Current limitations
 
 - Appointment times are currently predefined.
-- All appointments implicitly use the same duration.
 - There is no cancellation workflow or barber dashboard.
 - Anonymous booking creation needs additional anti-spam protection for production.
 - The database prevents identical start times, but does not yet model overlaps between services of different durations.

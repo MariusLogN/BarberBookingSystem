@@ -181,6 +181,20 @@ function App() {
       <main className="main-content">
         {currentView}
       </main>
+
+      <footer className="site-footer">
+        <p>
+          Built as a full-stack learning project. Explore the{" "}
+          <a
+            href="https://github.com/MariusLogN/BarberBookingSystem"
+            target="_blank"
+            rel="noreferrer"
+          >
+            source code on GitHub
+          </a>
+          .
+        </p>
+      </footer>
     </div>
   );
 }
