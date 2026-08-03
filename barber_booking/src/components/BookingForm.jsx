@@ -183,7 +183,7 @@ function BookingForm({
 
             {services.map((service) => (
               <option key={service.id} value={service.id}>
-                {service.name} — {service.duration_minutes} min — €
+                {service.name} | {service.duration_minutes} min | €
                 {(service.price_cents / 100).toFixed(2)}
               </option>
             ))}

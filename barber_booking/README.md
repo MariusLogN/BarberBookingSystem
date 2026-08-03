@@ -4,14 +4,13 @@ A full-stack appointment booking system built with React, Supabase, PostgreSQL, 
 
 ## Project at a glance
 
-- **Frontend:** React component design, state management, effects, and explicit loading, error, empty, and success states
-- **Data model:** Relational PostgreSQL tables for barbers, services, barber-service relationships, and bookings
-- **Availability:** Dynamic booking dates and duration-aware time-slot calculations
-- **Correctness:** Database-level overlap protection that remains safe when customers submit simultaneously
-- **Backend API:** A Supabase Edge Function validates requests, loads trusted data, and owns the booking workflow
-- **Security:** Row-Level Security, server-side secrets, layered validation, foreign keys, and database constraints
-- **Integration:** Optional booking-confirmation emails through Resend, with provider message IDs and delivery-state tracking
-- **Code organization:** Separation between UI components, frontend service adapters, and reusable utility functions
+- **Frontend:** A React interface guides customers through barber selection, booking, and confirmation, with clear loading and error feedback.
+- **Services and availability:** Each barber offers specific services with different prices and durations. Existing appointments are used to disable overlapping times.
+- **Database:** PostgreSQL stores barbers, services, their relationships, and bookings.
+- **Booking safety:** The database prevents overlapping appointments, including when two customers submit at nearly the same time.
+- **Backend:** A Supabase Edge Function validates booking requests and keeps privileged operations outside the browser.
+- **Security:** Customers can view availability without accessing private booking details.
+- **Email:** Customers can optionally receive a confirmation through Resend after their booking is saved.
 
 ## Architecture
 
@@ -21,64 +20,73 @@ React booking interface
         v
 Frontend service adapters
         |
-        v
-Supabase Edge Function
+        +--> Supabase database API --> PostgreSQL reads protected by RLS
         |
-        +--> PostgreSQL tables, triggers, and constraints
-        |
-        +--> Resend email API
+        +--> Supabase Edge Function --> PostgreSQL insert, trigger, and constraints
+                                  |
+                                  +--> Resend email API
 ```
 
-The browser handles presentation and user interaction. The Edge Function acts as the trusted API boundary, while PostgreSQL remains the final authority for relationships and appointment conflicts. Email delivery is treated as an optional side effect, so a provider failure does not remove a valid booking.
+The React frontend reads public barber and service information from RLS-protected tables. Availability comes from the restricted `booked_slots` view, which does not expose customer details. New bookings are sent to an Edge Function, where the request is validated before it reaches PostgreSQL. The database calculates the appointment end time and rejects overlapping bookings. A confirmation email is attempted only after the booking is saved, so an email failure does not cancel the appointment.
+
+## Use of AI
+
+I used AI as a learning and development assistant to explore unfamiliar concepts, draft parts of the React, SQL, and Edge Function code, and investigate errors. I reviewed and adapted the output rather than using it unchanged.
+
+For example, manual testing exposed a timezone conversion that stored a 10:00 appointment as 08:00. I investigated the cause and changed the time representation. I also replaced direct frontend booking inserts with an Edge Function when the workflow began to require trusted validation and a secret email-provider key.
 
 ## Screenshots
 
-Front page
+### Front page / barber selection
 
-![alt text]({F44F6FC3-5783-47C8-98CA-D2703D4A8572}.png)
+![Fireblade barber-selection page](./screenshots/barberSelection.png)
 
-Booking form
+### Booking form
 
-![alt text]({C3A7D0A3-95B5-42B1-B005-4D3F42793A37}.png)
+![Booking form for the selected barber](./screenshots/BookingForm.png)
 
-Dynamiclly generated dates and retriving booked times for the barber from the Database
+### Availability checks
 
-![alt text]({433DD4DC-51E2-4EA8-B584-B880F1C8D4BA}.png)
+![Dynamically generated dates and barber availability](./screenshots/availableTimeslots.png)
 
-Booking confirmation
+### Booking confirmation
 
-![alt text]({FA1AC9C2-6DD3-49F7-9C8E-CBD827CA9C3A}.png)
+![Successful booking confirmation](./screenshots/bookingConfirmed.png)
 
-Bookings table
+### Email confirmation
 
-![alt text]({AAFF1A90-0E9D-46FF-8682-C89329A69928}.png)
+![Booking confirmation email sent through Resend](./screenshots/email.png)
 
-Barber table
+### Database relations
 
-![alt text]({8BF31B81-7687-4448-987D-5E35057A8C0D}.png)
+![Relationships between the PostgreSQL tables](./screenshots/databaseRelations.png)
 
 ## How it works
 
-Barbers are loaded from Supabase when the application starts. After a customer selects a barber and date, the application fetches that barber's booked times and disables unavailable options. A confirmed appointment is then inserted into the database.
+Barbers are loaded from Supabase when the application starts. Selecting a barber loads the services that barber provides, including each service's price and duration. The frontend generates the next seven booking dates and fetches the selected barber's booked intervals through a restricted database view.
+
+The chosen service duration is used to disable start times that would overlap an existing appointment. When the customer submits the form, the Edge Function validates the request, loads trusted barber and service data, and inserts the booking. A database trigger calculates the appointment end time, and a PostgreSQL exclusion constraint prevents overlapping bookings even if two customers submit simultaneously. If the customer provided an email address, the function then asks Resend to send a confirmation and records the result without making the booking depend on the email succeeding.
 
 ## Technology
 
 - React 19
 - JavaScript
 - Vite
-- Supabase
-- PostgreSQL
+- Supabase JavaScript client
+- Supabase Edge Functions
+- PostgreSQL, including RLS, triggers, foreign keys, and an exclusion constraint
+- Resend email API
 - CSS
 
 ## Project structure
 
 ```text
 src/
-├── components/   User-interface components
-├── services/     Supabase queries and mutations
-├── utils/        Date and time transformations
-├── App.jsx       Application state and screen coordination
-└── supabaseClient.js
+├── components/         User-interface components
+├── services/           Frontend adapters for database and Edge Function calls
+├── utils/              Date, time, and availability calculations
+├── App.jsx             Application state and screen coordination
+└── supabaseClient.js   Supabase browser-client configuration
 ```
 
 ## Challenges and lessons
@@ -89,7 +97,21 @@ JavaScript `Date` objects serialize as UTC. Because this prototype models the wa
 
 ### Race conditions
 
-Checking availability before inserting is not enough: two customers could see the same slot as available and submit at nearly the same time. The database uniqueness constraint resolves this race safely, while React translates the PostgreSQL conflict into a useful customer message.
+Checking availability before inserting is not enough: two customers could see the same slot as available and submit at nearly the same time. The database exclusion constraint resolves this race safely, while React translates the API conflict into a useful customer message.
+
+### Moving trusted operations to the backend
+
+The first version created bookings directly from the React client. That approach was useful while learning Supabase, but it became the wrong boundary once booking creation required trusted validation and an external email provider.
+
+I moved the booking workflow into a Supabase Edge Function. The browser now sends only the customer's choices, while the backend validates the request, loads trusted barber and service data, performs the database insert, and calls Resend. This keeps business rules and privileged operations in an environment the user cannot modify. The Resend API key is stored as an Edge Function secret and is never included in the browser bundle.
+
+### RLS and limiting frontend exposure
+
+I learned that connecting a frontend directly to Supabase does not mean every database row should be public. Row-Level Security (RLS) policies define which database operations each client is allowed to perform, even when a request is made using the public Supabase key.
+
+The frontend can read public information such as barbers, services, and the minimum booking data needed to calculate availability. Private customer details are not exposed. A restricted database view provides only the appointment fields required by the booking interface instead of returning complete booking rows.
+
+This taught me to treat the frontend as an untrusted environment: users can inspect its code and change its requests. The Supabase publishable key can safely identify the project when RLS is configured correctly, but provider credentials and Supabase secret keys can authorize privileged or billable actions and must remain on the backend.
 
 ### Remote data is more than an array
 
@@ -97,14 +119,16 @@ Database-backed UI needs explicit loading, error, empty, and success states. Mod
 
 ## Current limitations
 
-- Appointment times are currently predefined.
+- Available start times are predefined in the frontend rather than generated from database-managed opening hours.
+- The booking window is fixed to the next seven calendar days and does not yet model closed days, breaks, or barber-specific schedules.
 - There is no cancellation workflow or barber dashboard.
 - Anonymous booking creation needs additional anti-spam protection for production.
-- The database prevents identical start times, but does not yet model overlaps between services of different durations.
+- Email status currently records whether Resend accepted the send request; delivery and bounce events are not yet synchronized through webhooks.
 
 ## Next steps
 
-- Generate time slots from opening hours and appointment duration
-- Add services, prices, and duration-based availability
-- Add authenticated barber/admin tools
+- Model opening hours and barber schedules, then generate valid start times from that data
+- Add authenticated barber/admin tools and a cancellation workflow
+- Process Resend webhooks to track delivered and bounced messages
 - Add automated tests for date generation, availability, and booking conflicts
+- Store the database schema and Edge Function source in the repository for reproducible deployments
